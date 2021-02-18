@@ -13,7 +13,7 @@ del get_versions
 
 class Main(Daemon):
 	def __init__(self, pidfile, configfile, basedir, host, port, debug, allowRoot, logConf):
-		Daemon.__init__(self, pidfile)
+		#Daemon.__init__(self, pidfile)
 
 		self._configfile = configfile
 		self._basedir = basedir

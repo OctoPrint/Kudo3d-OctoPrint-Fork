@@ -17,7 +17,7 @@ import octoprint.util as util
 import octoprint.users
 import octoprint.server
 import octoprint.plugin
-from octoprint.server import admin_permission, NO_CONTENT
+from octoprint.server import admin_permission, NO_CONTENT, printer as sp
 from octoprint.settings import settings as s, valid_boolean_trues
 from octoprint.server.util import apiKeyRequestHandler, corsResponseHandler
 from octoprint.server.util.flask import restricted_access, get_json_command_from_request, passive_login
@@ -30,6 +30,7 @@ api = Blueprint("api", __name__)
 from . import printer as api_printer
 from . import job as api_job
 from . import connection as api_connection
+from . import printerset as api_printerset
 from . import files as api_files
 from . import settings as api_settings
 from . import timelapse as api_timelapse
@@ -139,6 +140,9 @@ def apiVersion():
 @restricted_access
 @admin_permission.require(403)
 def performSystemAction():
+	#s().save(True)
+	s().setFloat(["serial", "zpos"], sp._currentZ)
+	s().save(True)
 	logger = logging.getLogger(__name__)
 	if "action" in request.values.keys():
 		action = request.values["action"]
@@ -161,6 +165,60 @@ def performSystemAction():
 				except Exception, e:
 					logger.warn("Command failed: %s" % e)
 					return make_response(("Command failed: %s" % e, 500, []))
+	return NO_CONTENT
+
+@api.route("/wifisystem", methods=["POST"])
+@restricted_access
+@admin_permission.require(403)
+def wifiperformSystemAction():
+	#s().save(True)
+	logger = logging.getLogger(__name__)
+	if "action" in request.values.keys():
+		action = request.values["action"]
+		action = "netconnectcli configure_wifi " + action
+		try:
+			# Note: we put the command in brackets since sarge (up to the most recently released version) has
+			# a bug concerning shell=True commands. Once sarge 0.1.4 we can upgrade to that and remove this
+			# workaround again
+			#
+			# See https://bitbucket.org/vinay.sajip/sarge/issue/21/behavior-is-not-like-popen-using-shell
+			p = sarge.run(action, stderr=sarge.Capture(), shell=True)
+			p = sarge.run("netconnectcli select_wifi", stderr=sarge.Capture(), shell=True)
+			if p.returncode != 0:
+				returncode = p.returncode
+				stderr_text = p.stderr.text
+				logger.warn("Command failed with return code %i: %s" % (returncode, stderr_text))
+				return make_response(("Command failed with return code %i: %s" % (returncode, stderr_text), 500, []))
+		except Exception, e:
+			logger.warn("Command failed: %s" % e)
+			return make_response(("Command failed: %s" % e, 500, []))
+	return NO_CONTENT
+
+@api.route("/wifireset", methods=["POST"])
+@restricted_access
+@admin_permission.require(403)
+def wifiperformResetAction():
+	#s().save(True)
+	logger = logging.getLogger(__name__)
+	if "action" in request.values.keys():
+		action = request.values["action"]
+		action = "netconnectcli configure_wifi " + action
+		try:
+			# Note: we put the command in brackets since sarge (up to the most recently released version) has
+			# a bug concerning shell=True commands. Once sarge 0.1.4 we can upgrade to that and remove this
+			# workaround again
+			#
+			# See https://bitbucket.org/vinay.sajip/sarge/issue/21/behavior-is-not-like-popen-using-shell
+			p = sarge.run(action, stderr=sarge.Capture(), shell=True)
+			p = sarge.run("netconnectcli reset", stderr=sarge.Capture(), shell=True)
+			if p.returncode != 0:
+				returncode = p.returncode
+				stderr_text = p.stderr.text
+				logger.warn("Command failed with return code %i: %s" % (returncode, stderr_text))
+				return make_response(("Command failed with return code %i: %s" % (returncode, stderr_text), 500, []))
+		except Exception, e:
+			logger.warn("Command failed: %s" % e)
+			return make_response(("Command failed: %s" % e, 500, []))
 	return NO_CONTENT
 
 

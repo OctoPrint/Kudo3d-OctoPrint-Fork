@@ -2,7 +2,7 @@
 
 import os
 import sys
-
+os.environ['PYTHON_EGG_CACHE'] = '/home/pi/python-eggs'
 basedir = os.path.dirname(os.path.realpath(__file__))
 
 old = os.path.join(basedir, "octoprint")

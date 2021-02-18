@@ -19,7 +19,6 @@ import os
 import logging
 import logging.config
 import atexit
-
 SUCCESS = {}
 NO_CONTENT = ("", 204)
 
@@ -58,6 +57,7 @@ import octoprint.filemanager.analysis
 import octoprint.slicing
 
 from . import util
+
 util.tornado.fix_ioloop_scheduling()
 
 
@@ -153,11 +153,14 @@ def index():
 		url_for('static', filename='js/app/viewmodels/printerprofiles.js'),
 		url_for('static', filename='js/app/viewmodels/settings.js'),
 		url_for('static', filename='js/app/viewmodels/slicing.js'),
-		url_for('static', filename='js/app/viewmodels/temperature.js'),
+		#url_for('static', filename='js/app/viewmodels/temperature.js'),
+		url_for('static', filename='js/app/viewmodels/printerset.js'),
 		url_for('static', filename='js/app/viewmodels/terminal.js'),
+		#url_for('static', filename='js/app/viewmodels/terminal1.js'),
 		url_for('static', filename='js/app/viewmodels/users.js'),
 		url_for('static', filename='js/app/viewmodels/log.js'),
 		url_for('static', filename='js/app/viewmodels/usersettings.js')
+
 	]
 	if enable_gcodeviewer:
 		assets["js"] += [
@@ -228,14 +231,15 @@ def index():
 	# tabs
 
 	templates["tab"]["entries"] = dict(
-		temperature=(gettext("Temperature"), dict(template="tabs/temperature.jinja2", _div="temp")),
+		#terminal1=(gettext("WiFi"), dict(template="tabs/terminal1.jinja2", _div="term1")),
+		temperature=(gettext("Print"), dict(template="tabs/printerset.jinja2", _div="temp")),
 		control=(gettext("Control"), dict(template="tabs/control.jinja2", _div="control")),
-		terminal=(gettext("Terminal"), dict(template="tabs/terminal.jinja2", _div="term")),
+		#terminal=(gettext("Terminal"), dict(template="tabs/terminal.jinja2", _div="term")),
 	)
-	if enable_gcodeviewer:
-		templates["tab"]["entries"]["gcodeviewer"] = (gettext("GCode Viewer"), dict(template="tabs/gcodeviewer.jinja2", _div="gcode"))
-	if enable_timelapse:
-		templates["tab"]["entries"]["timelapse"] = (gettext("Timelapse"), dict(template="tabs/timelapse.jinja2", _div="timelapse"))
+	#if enable_gcodeviewer:
+	#	templates["tab"]["entries"]["gcodeviewer"] = (gettext("GCode Viewer"), dict(template="tabs/gcodeviewer.jinja2", _div="gcode"))
+	#if enable_timelapse:
+	#	templates["tab"]["entries"]["timelapse"] = (gettext("Timelapse"), dict(template="tabs/timelapse.jinja2", _div="timelapse"))
 
 	# settings dialog
 
@@ -554,7 +558,8 @@ class Server():
 		global pluginManager
 		global appSessionManager
 		global debug
-
+		
+		
 		from tornado.ioloop import IOLoop
 		from tornado.web import Application
 
@@ -568,8 +573,10 @@ class Server():
 		# then initialize logging
 		self._initLogging(self._debug, self._logConf)
 		logger = logging.getLogger(__name__)
+		
 		def exception_logger(exc_type, exc_value, exc_tb):
 			logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_tb))
+			
 		sys.excepthook = exception_logger
 		logger.info("Starting OctoPrint %s" % DISPLAY_VERSION)
 
@@ -585,6 +592,8 @@ class Server():
 		fileManager = octoprint.filemanager.FileManager(analysisQueue, slicingManager, printerProfileManager, initial_storage_managers=storage_managers)
 		printer = Printer(fileManager, analysisQueue, printerProfileManager)
 		appSessionManager = util.flask.AppSessionManager()
+		
+		
 
 		def octoprint_plugin_inject_factory(name, implementation):
 			if not isinstance(implementation, octoprint.plugin.OctoPrintPlugin):
@@ -606,9 +615,9 @@ class Server():
 			default_settings = implementation.get_settings_defaults()
 			get_preprocessors, set_preprocessors = implementation.get_settings_preprocessors()
 			plugin_settings = octoprint.plugin.plugin_settings(name,
-			                                                   defaults=default_settings,
-			                                                   get_preprocessors=get_preprocessors,
-			                                                   set_preprocessors=set_preprocessors)
+																												 defaults=default_settings,
+																												 get_preprocessors=get_preprocessors,
+																												 set_preprocessors=set_preprocessors)
 			return dict(settings=plugin_settings)
 
 		pluginManager.initialize_implementations(
@@ -721,7 +730,8 @@ class Server():
 		upload_suffixes = dict(name=settings().get(["server", "uploads", "nameSuffix"]), path=settings().get(["server", "uploads", "pathSuffix"]))
 		self._tornado_app = Application(self._router.urls + [
 			(r"/downloads/timelapse/([^/]*\.mpg)", util.tornado.LargeResponseHandler, dict(path=settings().getBaseFolder("timelapse"), as_attachment=True)),
-			(r"/downloads/files/local/([^/]*\.(gco|gcode|g|stl))", util.tornado.LargeResponseHandler, dict(path=settings().getBaseFolder("uploads"), as_attachment=True)),
+			#(r"/downloads/files/local/([^/]*\.(gco|gcode|g|stl))", util.tornado.LargeResponseHandler, dict(path=settings().getBaseFolder("uploads"), as_attachment=True)),
+			(r"/downloads/files/local/([^/]*)", util.tornado.LargeResponseHandler, dict(path=settings().getBaseFolder("uploads"), as_attachment=True)),
 			(r"/downloads/logs/([^/]*)", util.tornado.LargeResponseHandler, dict(path=settings().getBaseFolder("logs"), as_attachment=True, access_validation=util.tornado.access_validation_factory(app, loginManager, util.flask.admin_validator))),
 			(r"/downloads/camera/current", util.tornado.UrlForwardHandler, dict(url=settings().get(["webcam", "snapshot"]), as_attachment=True, access_validation=util.tornado.access_validation_factory(app, loginManager, util.flask.user_validator))),
 			(r".*", util.tornado.UploadStorageFallbackHandler, dict(fallback=util.tornado.WsgiInputContainer(app.wsgi_app), file_prefix="octoprint-file-upload-", file_suffix=".tmp", suffixes=upload_suffixes))
@@ -747,9 +757,10 @@ class Server():
 
 		# run our startup plugins
 		octoprint.plugin.call_plugin(octoprint.plugin.StartupPlugin,
-		                             "on_startup",
-		                             args=(self._host, self._port))
-
+																 "on_startup",
+																 args=(self._host, self._port))
+		
+		
 		# prepare our after startup function
 		def on_after_startup():
 			logger.info("Listening on http://%s:%d" % (self._host, self._port))
@@ -761,18 +772,23 @@ class Server():
 			# control to the ioloop
 			def work():
 				octoprint.plugin.call_plugin(octoprint.plugin.StartupPlugin,
-				                             "on_after_startup")
+																		 "on_after_startup")
 			import threading
 			threading.Thread(target=work).start()
+			
 		ioloop.add_callback(on_after_startup)
-
+		
+		
+		
 		# prepare our shutdown function
 		def on_shutdown():
 			logger.info("Goodbye!")
+			settings().setFloat(["serial", "zpos"], printer._currentZ)
+			settings().save(True)
 			observer.stop()
 			observer.join()
 			octoprint.plugin.call_plugin(octoprint.plugin.ShutdownPlugin,
-			                             "on_shutdown")
+																	 "on_shutdown")
 		atexit.register(on_shutdown)
 
 		try:
@@ -865,3 +881,4 @@ class Server():
 if __name__ == "__main__":
 	server = Server()
 	server.run()
+

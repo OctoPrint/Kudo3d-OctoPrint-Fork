@@ -111,6 +111,8 @@ def _getFileList(origin, filter=None):
 				"refs": {
 					"resource": url_for(".readGcodeFile", target=FileDestinations.LOCAL, filename=file["name"], _external=True),
 					"download": url_for("index", _external=True) + "downloads/files/" + FileDestinations.LOCAL + "/" + file["name"]
+					#"download": url_for(".readGcodeFile", target=FileDestinations.LOCAL, filename=file["name"], _external=True),
+					#"download": "/home/maxchen/.octoprint/uploads/" + file["name"]
 				}
 			})
 	return files
@@ -228,7 +230,8 @@ def uploadGcodeFile(target):
 			"origin": FileDestinations.LOCAL,
 			"refs": {
 				"resource": location,
-				"download": url_for("index", _external=True) + "downloads/files/" + FileDestinations.LOCAL + "/" + filename
+				#"download": url_for("index", _external=True) + "downloads/files/" + FileDestinations.LOCAL + "/" + filename
+				"download": url_for("index", _external=True) + "uploads" + "/" + filename
 			}
 		}
 	})
@@ -284,18 +287,22 @@ def gcodeFileCommand(filename, target):
 	if command == "select":
 		# selects/loads a file
 		printAfterLoading = False
-		if "print" in data.keys() and data["print"] in valid_boolean_trues:
-			if not printer.is_operational():
-				return make_response("Printer is not operational, cannot directly start printing", 409)
-			printAfterLoading = True
-
-		sd = False
-		if target == FileDestinations.SDCARD:
-			filenameToSelect = filename
-			sd = True
-		else:
+		if filename.endswith('.csv'):
 			filenameToSelect = fileManager.path_on_disk(target, filename)
-		printer.select_file(filenameToSelect, sd, printAfterLoading)
+			printer.select_file(filenameToSelect, False, printAfterLoading)
+		else:	
+			if "print" in data.keys() and data["print"] in valid_boolean_trues:
+				if not printer.is_operational():
+					return make_response("Printer is not operational, cannot directly start printing", 409)
+				printAfterLoading = True
+	
+			sd = False
+			if target == FileDestinations.SDCARD:
+				filenameToSelect = filename
+				sd = True
+			else:
+				filenameToSelect = fileManager.path_on_disk(target, filename)
+			printer.select_file(filenameToSelect, sd, printAfterLoading)
 
 	elif command == "slice":
 		try:
@@ -397,6 +404,7 @@ def gcodeFileCommand(filename, target):
 			"refs": {
 				"resource": location,
 				"download": url_for("index", _external=True) + "downloads/files/" + target + "/" + gcode_name
+				#"download": url_for("index", _external=True) + "uploads" + "/" + gcode_name
 			}
 		}
 

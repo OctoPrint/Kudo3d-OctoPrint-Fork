@@ -319,6 +319,11 @@ class LocalFileStorage(StorageInterface):
 	def _analysis_backlog_generator(self, path=None):
 		if path is None:
 			path = self.basefolder
+		for entry in os.listdir(path):
+			if entry.find(" ")>=0:
+				oldf = os.path.join(path, entry)
+				newf = os.path.join(path, entry.replace(" ","_"))
+				os.rename(oldf, newf)
 
 		metadata = self._get_metadata(path)
 		if not metadata:

@@ -45,6 +45,8 @@ def get_connection_options():
 		"ports": comm.serialList(),
 		"baudrates": comm.baudrateList(),
 		"portPreference": settings().get(["serial", "port"]),
+		"portPreference1": settings().get(["serial", "port1"]),
+        "projector": settings().get(["serial", "projector"]),
 		"baudratePreference": settings().getInt(["serial", "baudrate"]),
 		"autoconnect": settings().getBoolean(["serial", "autoconnect"])
 	}

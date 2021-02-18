@@ -68,6 +68,8 @@ def getSettings():
 		},
 		"serial": {
 			"port": connectionOptions["portPreference"],
+			"port1": s.get(["serial", "port1"]),
+			"projector": s.get(["serial", "projector"]),
 			"baudrate": connectionOptions["baudratePreference"],
 			"portOptions": connectionOptions["ports"],
 			"baudrateOptions": connectionOptions["baudrates"],

@@ -9,10 +9,28 @@ $(function() {
             return {
                 name: ko.observable(),
                 key: ko.observable()
-            }
+            };
         };
-
+        
+        //terminal
+        self.log = ko.observableArray([]);
+        self.buffer = ko.observable(300);
+        self.command = ko.observable(undefined);
+        self.Ver = ko.observable(undefined);
+        self.ssid = ko.observable(undefined);
+        self.password = ko.observable(undefined);
+        self.autoscrollEnabled = ko.observable(true);
+        self.filters = self.settings.terminalFilters;
+        self.filterRegex = ko.observable();
+        self.cmdHistory = [];
+        self.cmdHistoryIdx = -1;
+        //end---terminal
+        
         self.isErrorOrClosed = ko.observable(undefined);
+        self.iszenable = ko.observable(false);
+        self.iszenable2 = ko.observable(false);
+        self.iszenable3 = ko.observable(false);
+        self.vflag = ko.observable(false);
         self.isOperational = ko.observable(undefined);
         self.isPrinting = ko.observable(undefined);
         self.isPaused = ko.observable(undefined);
@@ -25,8 +43,8 @@ $(function() {
 
         self.tools = ko.observableArray([]);
 
-        self.feedRate = ko.observable(100);
-        self.flowRate = ko.observable(100);
+        self.feedRate = ko.observable();
+        self.flowRate = ko.observable(200);//normal flow rate set
 
         self.feedbackControlLookup = {};
 
@@ -35,6 +53,8 @@ $(function() {
 
         self.webcamDisableTimeout = undefined;
 
+        self.zbuttonText = ko.observable("Enable     Cal");
+        self.zbuttonText2 = ko.observable("OFF");
         self.keycontrolActive = ko.observable(false);
         self.keycontrolHelpActive = ko.observable(false);
         self.keycontrolPossible = ko.computed(function () {
@@ -48,6 +68,24 @@ $(function() {
             self._updateExtruderCount();
             self.settings.printerProfiles.currentProfileData().extruder.count.subscribe(self._updateExtruderCount);
         });
+        self.zenable = 0;
+        self.zzero = function() {
+            if (self.zenable == 1)
+            {
+                self.zenable = 0;
+                self.iszenable(false);
+                self.zbuttonText("Enable     Cal");
+                }
+            else
+            {
+                self.zenable = 1;
+                self.iszenable(true);
+                self.zbuttonText("Disable Cal");
+                }
+            console.log(self.zenable);
+            return self.iszenable();    
+                
+        };
         self._updateExtruderCount = function () {
             var tools = [];
 
@@ -71,6 +109,7 @@ $(function() {
 
         self.fromCurrentData = function (data) {
             self._processStateData(data.state);
+            self._processJobData(data.job);
         };
 
         self.fromHistoryData = function (data) {
@@ -85,7 +124,13 @@ $(function() {
             self.isError(data.flags.error);
             self.isReady(data.flags.ready);
             self.isLoading(data.flags.loading);
+            //self.vflag(data.flags.vflag);
+            self.feedRate(data.flags.zrate);
         };
+        self._processJobData = function(data) {
+            self.vflag(data.vflag);
+            //self.feedRate(data.zrate);
+       };
 
         self.onEventRegisteredMessageReceived = function(payload) {
             if (payload.key in self.feedbackControlLookup) {
@@ -230,14 +275,28 @@ $(function() {
             self.sendPrintHeadCommand(data);
         };
 
-        self.sendHomeCommand = function (axis) {
-            self.sendPrintHeadCommand({
-                "command": "home",
-                "axes": axis
+        self.sendHomeCommand1 = function (axis) {
+            $("#confirmation_dialog2 .confirmation_dialog_message").html(gettext("The Platform is going to HOME position.<br><strong> WARNING</strong>: Please make sure there is no cured resin below the build platform."));
+            $("#confirmation_dialog2 .confirmation_dialog_acknowledge").unbind("click");
+            $("#confirmation_dialog2 .confirmation_dialog_acknowledge").click(function(e) {e.preventDefault(); $("#confirmation_dialog2").modal("hide");  
+                self.sendPrintHeadCommand({
+                    "command": "home",
+                    "axes": axis
+                });
             });
+            $("#confirmation_dialog2").modal("show");
         };
-
+        self.sendHomeCommand = function (axis) {
+                self.sendPrintHeadCommand({
+                    "command": "home",
+                    "axes": axis
+                });
+            
+        };
+        
         self.sendFeedRateCommand = function () {
+            $("#validate_dialog2 .validate_dialog2_message").text(gettext("Please note that at certain speed resonance noise may occur!"));
+            $("#validate_dialog2").modal("show");
             self.sendPrintHeadCommand({
                 "command": "feedrate",
                 "factor": self.feedRate()
@@ -275,6 +334,80 @@ $(function() {
             self.sendToolCommand({
                 command: "select",
                 tool: data.key()
+            });
+        };
+        self.sendPoweron = function () {
+            self.sendToolCommand({
+                "command": "poweron",
+                "factor": self.flowRate()
+            });
+        };
+        self.sendPoweroff = function () {
+            self.sendToolCommand({
+                "command": "poweroff",
+                "factor": self.flowRate()
+            });
+        };
+        self.sendCalibrate = function () {
+            self.sendToolCommand({
+                "command": "showgrid",
+                "factor": self.flowRate()
+            });
+        };
+        self.sendCalibrate1 = function () {
+            self.sendToolCommand({
+                "command": "showgrid1",
+                "factor": self.flowRate()
+            });
+        };
+        
+        self.sendCal = function () {
+            self.sendHomeCommand(['z']);
+            self.sendCustomCommand({type:'commands',commands:['M42 P10 S255']});//Fan on
+            self.sendMotor();//up-down-up:wait for 105s
+            self.sendCustomCommand({type:'commands',commands:['M106']});//LED on
+            
+        };
+        self.sendCalOff = function () {
+            self.sendHomeCommand1(['z']);
+            self.sendCustomCommand({type:'commands',commands:['M106 S0']});//Led off
+            self.sendCalibrate();//LCD off
+            self.sendCustomCommand({type:'commands',commands:['M42 P10 S0']});//Fan off
+            
+            
+        };
+        self.sendPrompt = function () {
+            self.sendCustomCommand({type:'commands',commands:['M42 P10 S255']});//Fan on
+            
+        };
+        self.sendEconomic = function () {
+            self.sendToolCommand({
+                "command": "economic",
+                "factor": self.flowRate()
+            });
+        };
+        self.sendNormal = function () {
+            self.sendToolCommand({
+                "command": "normal",
+                "factor": self.flowRate()
+            });
+        };
+        self.sendMotor = function () {
+            self.sendToolCommand({
+                "command": "motor",
+                "factor": self.flowRate()
+            });
+        };
+        self.sendPeek = function () {
+            self.sendToolCommand({
+                "command": "peek",
+                "factor": self.flowRate()
+            });
+        };
+        self.sendLcd = function () {
+            self.sendToolCommand({
+                "command": "lcd",
+                "factor": self.flowRate()
             });
         };
 
@@ -338,6 +471,16 @@ $(function() {
                 data: JSON.stringify(data)
             })
         };
+        self.requestData2 = function() {
+            $.ajax({
+                url: API_BASEURL + "job",
+                method: "GET",
+                dataType: "json",
+                success: function(data) {
+                    self.fromCurrentData(data);
+                }
+            })
+        };
 
         self.displayMode = function (customControl) {
             if (customControl.hasOwnProperty("children")) {
@@ -365,6 +508,7 @@ $(function() {
 
         self.onTabChange = function (current, previous) {
             if (current == "#control") {
+            self.requestData2();
                 if (self.webcamDisableTimeout != undefined) {
                     clearTimeout(self.webcamDisableTimeout);
                 }
@@ -425,88 +569,241 @@ $(function() {
         };
 
         self.onKeyDown = function (data, event) {
-            if (!self.settings.feature_keyboardControl()) return;
-
-            var button = undefined;
-            var visualizeClick = true;
 
             switch (event.which) {
-                case 37: // left arrow key
-                    // X-
-                    button = $("#control-xdec");
+                case 121: // number 1
+                self.iszenable3(true);
+             $("#z_zero3").focus();
+                   break;
+                case 120: // number 1
+                self.iszenable2(true);
+             $("#z_zero").focus();
+                   break;
+                case 119: // number 1
+                self.iszenable2(false);
+             $("#z_zero").focus();
+                self.iszenable3(false);
+             $("#z_zero3").focus();
                     break;
-                case 38: // up arrow key
-                    // Y+
-                    button = $("#control-yinc");
-                    break;
-                case 39: // right arrow key
-                    // X+
-                    button = $("#control-xinc");
-                    break;
-                case 40: // down arrow key
-                    // Y-
-                    button = $("#control-ydec");
-                    break;
-                case 49: // number 1
-                case 97: // numpad 1
-                    // Distance 0.1
-                    button = $("#control-distance01");
-                    visualizeClick = false;
-                    break;
-                case 50: // number 2
-                case 98: // numpad 2
-                    // Distance 1
-                    button = $("#control-distance1");
-                    visualizeClick = false;
-                    break;
-                case 51: // number 3
-                case 99: // numpad 3
-                    // Distance 10
-                    button = $("#control-distance10");
-                    visualizeClick = false;
-                    break;
-                case 52: // number 4
-                case 100: // numpad 4
-                    // Distance 100
-                    button = $("#control-distance100");
-                    visualizeClick = false;
-                    break;
-                case 33: // page up key
-                case 87: // w key
-                    // z lift up
-                    button = $("#control-zinc");
-                    break;
-                case 34: // page down key
-                case 83: // s key
-                    // z lift down
-                    button = $("#control-zdec");
-                    break;
-                case 36: // home key
-                    // xy home
-                    button = $("#control-xyhome");
-                    break;
-                case 35: // end key
-                    // z home
-                    button = $("#control-zhome");
-                    break;
-                default:
-                    event.preventDefault();
-                    return false;
+                //default:
+                    //event.preventDefault();
+                    //return false;
             }
 
-            if (button === undefined) {
-                return false;
-            } else {
-                event.preventDefault();
-                if (visualizeClick) {
-                    button.addClass("active");
-                    setTimeout(function () {
-                        button.removeClass("active");
-                    }, 150);
+        };
+        //terminal
+        self.displayedLines = ko.computed(function() {
+            var regex = self.filterRegex();
+            var lineVisible = function(entry) {
+                return regex == undefined || !entry.line.match(regex);
+            };
+
+            var filtered = false;
+            var result = [];
+            _.each(self.log(), function(entry) {
+                if (lineVisible(entry)) {
+                    result.push(entry);
+                    filtered = false;
+                } else if (!filtered) {
+                    result.push(self._toInternalFormat("[...]", "filtered"));
+                    filtered = true;
                 }
-                button.click();
+            });
+
+            return result;
+        });
+        self.displayedLines.subscribe(function() {
+            self.updateOutput();
+        });
+
+        self.lineCount = ko.computed(function() {
+            var total = self.log().length;
+            var displayed = _.filter(self.displayedLines(), function(entry) { return entry.type == "line" }).length;
+            var filtered = total - displayed;
+
+            if (total == displayed) {
+                return _.sprintf(gettext("showing %(displayed)d lines"), {displayed: displayed});
+            } else {
+                return _.sprintf(gettext("showing %(displayed)d lines (%(filtered)d of %(total)d total lines filtered)"), {displayed: displayed, total: total, filtered: filtered});
+            }
+        });
+
+        self.autoscrollEnabled.subscribe(function(newValue) {
+            if (newValue) {
+                self.log(self.log.slice(-self.buffer()));
+            }
+        });
+
+        self.activeFilters = ko.observableArray([]);
+        self.activeFilters.subscribe(function(e) {
+            self.updateFilterRegex();
+        });
+        self.fromCurrentData = function(data) {
+            self._processStateData(data.state);
+            self._processJobData(data.job);
+            self._processCurrentLogData(data.logs);
+        };
+
+        self.fromHistoryData = function(data) {
+            self._processStateData(data.state);
+            self._processHistoryLogData(data.logs);
+        };
+        self._processJobData = function(data) {
+            self.Ver(data.ver);
+        };
+        self.VerString = ko.computed(function() {
+            return _.sprintf("%s", self.Ver());
+        });
+
+        self._processCurrentLogData = function(data) {
+            self.log(self.log().concat(_.map(data, function(line) { return self._toInternalFormat(line) })));
+            if (self.autoscrollEnabled()) {
+                self.log(self.log.slice(-300));
             }
         };
+
+        self._processHistoryLogData = function(data) {
+            self.log(_.map(data, function(line) { return self._toInternalFormat(line) }));
+        };
+
+        self._toInternalFormat = function(line, type) {
+            if (type === undefined) {
+                type = "line";
+            }
+            return {line: line, type: type};
+        };
+
+        self._processStateData = function(data) {
+            self.isErrorOrClosed(data.flags.closedOrError);
+            self.isOperational(data.flags.operational);
+            self.isPaused(data.flags.paused);
+            self.isPrinting(data.flags.printing);
+            self.isError(data.flags.error);
+            self.isReady(data.flags.ready);
+            self.isLoading(data.flags.loading);
+        };
+
+        self.updateFilterRegex = function() {
+            var filterRegexStr = self.activeFilters().join("|").trim();
+            if (filterRegexStr === "") {
+                self.filterRegex(undefined);
+            } else {
+                self.filterRegex(new RegExp(filterRegexStr));
+            }
+            self.updateOutput();
+        };
+
+        self.updateOutput = function() {
+            if (self.autoscrollEnabled()) {
+                self.scrollToEnd();
+            }
+        };
+
+        self.toggleAutoscroll = function() {
+            self.autoscrollEnabled(!self.autoscrollEnabled());
+        };
+        
+        self.WiFiSetup = function() {
+                $.ajax({
+                    url: API_BASEURL + "wifisystem",
+                    type: "POST",
+                    dataType: "json",
+                    data: "action="+self.ssid()+" "+self.password(),
+                    success: function() {
+                        new PNotify({title: "Success", text: _.sprintf(gettext("The command \"%(command)s\" executed successfully"), {command: "WiFi Setup"}), type: "success"});
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        var error = "<p>" + _.sprintf(gettext("The command \"%(command)s\" could not be executed."), {command: "WiFi Set"}) + "</p>";
+                        error += pnotifyAdditionalInfo("<pre>" + jqXHR.responseText + "</pre>");
+                        new PNotify({title: gettext("Error"), text: error, type: "error", hide: false});
+                    }
+                });
+        };
+
+        self.selectAll = function() {
+            var container = $("#terminal-output");
+            if (container.length) {
+                container.selectText();
+            }
+        };
+
+        self.scrollToEnd = function() {
+            var container = $("#terminal-output");
+            if (container.length) {
+                container.scrollTop(container[0].scrollHeight - container.height())
+            }
+        };
+
+        self.sendCommand = function() {
+            var command = self.command();
+            if (!command) {
+                return;
+            }
+
+            var re = /^([gmt][0-9]+)(\s.*)?/;
+            var commandMatch = command.match(re);
+            if (commandMatch !== null) {
+                command = commandMatch[1].toUpperCase() + ((commandMatch[2] !== undefined) ? commandMatch[2] : "");
+            }
+
+            if (command) {
+                $.ajax({
+                    url: API_BASEURL + "printer/command",
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/json; charset=UTF-8",
+                    data: JSON.stringify({"command": command})
+                });
+        
+                self.cmdHistory.push(command);
+                self.cmdHistory.slice(-300); // just to set a sane limit to how many manually entered commands will be saved...
+                self.cmdHistoryIdx = self.cmdHistory.length;
+                self.command("");
+            }
+        };
+
+        self.handleKeyDown = function(event) {
+            var keyCode = event.keyCode;
+
+            if (keyCode == 38 || keyCode == 40) {
+                if (keyCode == 38 && self.cmdHistory.length > 0 && self.cmdHistoryIdx > 0) {
+                    self.cmdHistoryIdx--;
+                } else if (keyCode == 40 && self.cmdHistoryIdx < self.cmdHistory.length - 1) {
+                    self.cmdHistoryIdx++;
+                }
+
+                if (self.cmdHistoryIdx >= 0 && self.cmdHistoryIdx < self.cmdHistory.length) {
+                    self.command(self.cmdHistory[self.cmdHistoryIdx]);
+                }
+
+                // prevent the cursor from being moved to the beginning of the input field (this is actually the reason
+                // why we do the arrow key handling in the keydown event handler, keyup would be too late already to
+                // prevent this from happening, causing a jumpy cursor)
+                return false;
+            }
+
+            // do not prevent default action
+            return true;
+        };
+
+        self.handleKeyUp = function(event) {
+            if (event.keyCode == 13) {
+                self.sendCommand();
+            }
+
+            // do not prevent default action
+            return true;
+        };
+
+        self.onAfterTabChange = function(current, previous) {
+            if (current != "#control") {
+                return;
+            }
+            if (self.autoscrollEnabled()) {
+                self.scrollToEnd();
+            }
+        };
+        //end--terminal
 
     }
 

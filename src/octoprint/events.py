@@ -295,6 +295,8 @@ class CommandTrigger(GenericEventListener):
 
 	def _executeSystemCommand(self, command):
 		def commandExecutioner(command):
+			#settings().setFloat(["serial", "zpos"], self._printer._currentZ)
+			#settings().save()
 			self._logger.info("Executing system command: %s" % command)
 			subprocess.Popen(command, shell=True)
 
@@ -334,7 +336,7 @@ class CommandTrigger(GenericEventListener):
 		"""
 
 		params = {
-			"__currentZ": "-1",
+			"__currentZ": "0",
 			"__filename": "NO FILE",
 			"__progress": "0",
 			"__data": str(payload),

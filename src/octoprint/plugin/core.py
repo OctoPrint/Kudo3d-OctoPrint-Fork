@@ -345,7 +345,7 @@ class PluginManager(object):
 
 		self.registered_clients = []
 
-		self.reload_plugins()
+		#self.reload_plugins()
 
 	def _find_plugins(self):
 		plugins = dict()

@@ -23,7 +23,8 @@ def controlJob():
 		"start": [],
 		"restart": [],
 		"pause": [],
-		"cancel": []
+		"cancel": [],
+		"peek": []
 	}
 
 	command, data, response = get_json_command_from_request(request, valid_commands)
@@ -48,6 +49,10 @@ def controlJob():
 		if not activePrintjob:
 			return make_response("Printer is neither printing nor paused, 'cancel' command cannot be performed", 409)
 		printer.cancel_print()
+	elif command == "peek":
+		if not activePrintjob:
+			return make_response("Printer is neither printing nor paused, 'peek' command cannot be performed", 409)
+		printer.peek()
 	return NO_CONTENT
 
 
@@ -57,5 +62,6 @@ def jobState():
 	return jsonify({
 		"job": currentData["job"],
 		"progress": currentData["progress"],
-		"state": currentData["state"]["text"]
+		#"state": currentData["state"]["text"]
+		"state": currentData["state"]
 	})

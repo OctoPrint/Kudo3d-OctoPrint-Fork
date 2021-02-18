@@ -17,6 +17,9 @@ $(function() {
         self.isError = ko.observable(undefined);
         self.isReady = ko.observable(undefined);
         self.isLoading = ko.observable(undefined);
+        self.Ver = ko.observable(undefined);
+        self.ssid = ko.observable(undefined);
+        self.password = ko.observable(undefined);
 
         self.autoscrollEnabled = ko.observable(true);
 
@@ -75,6 +78,7 @@ $(function() {
 
         self.fromCurrentData = function(data) {
             self._processStateData(data.state);
+            self._processJobData(data.job);
             self._processCurrentLogData(data.logs);
         };
 
@@ -82,6 +86,12 @@ $(function() {
             self._processStateData(data.state);
             self._processHistoryLogData(data.logs);
         };
+        self._processJobData = function(data) {
+            self.Ver(data.ver);
+        };
+        self.VerString = ko.computed(function() {
+            return _.sprintf("%s", self.Ver());
+        });
 
         self._processCurrentLogData = function(data) {
             self.log(self.log().concat(_.map(data, function(line) { return self._toInternalFormat(line) })));
@@ -113,7 +123,7 @@ $(function() {
 
         self.updateFilterRegex = function() {
             var filterRegexStr = self.activeFilters().join("|").trim();
-            if (filterRegexStr == "") {
+            if (filterRegexStr === "") {
                 self.filterRegex(undefined);
             } else {
                 self.filterRegex(new RegExp(filterRegexStr));
@@ -129,6 +139,31 @@ $(function() {
 
         self.toggleAutoscroll = function() {
             self.autoscrollEnabled(!self.autoscrollEnabled());
+        };
+        self.AutoUpdate = function() {
+            $.ajax({
+                url: API_BASEURL + "printer/autoupdate",
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                data: JSON.stringify({"command": "autoupdate"})
+            });
+        };
+        self.WiFiSetup = function() {
+                $.ajax({
+                    url: API_BASEURL + "wifisystem",
+                    type: "POST",
+                    dataType: "json",
+                    data: "action="+self.ssid()+" "+self.password(),
+                    success: function() {
+                        new PNotify({title: "Success", text: _.sprintf(gettext("The command \"%(command)s\" executed successfully"), {command: "WiFi Setup"}), type: "success"});
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        var error = "<p>" + _.sprintf(gettext("The command \"%(command)s\" could not be executed."), {command: "WiFi Set"}) + "</p>";
+                        error += pnotifyAdditionalInfo("<pre>" + jqXHR.responseText + "</pre>");
+                        new PNotify({title: gettext("Error"), text: error, type: "error", hide: false});
+                    }
+                })
         };
 
         self.selectAll = function() {
@@ -220,6 +255,7 @@ $(function() {
     OCTOPRINT_VIEWMODELS.push([
         TerminalViewModel,
         ["loginStateViewModel", "settingsViewModel"],
-        "#term"
+        "#term" 
     ]);
+    
 });

@@ -1,0 +1,107 @@
+<div class="form-horizontal">
+<div class="row-fluid print-control" style="display: none;" data-bind="visible: loginState.isUser">
+    {#<button class="btn btn-primary span4" data-bind="click: print, enable: isOperational() && isReady() && !isPrinting() && loginState.isUser(), css: {'btn-danger': isPaused()}, attr: {title: titlePrintButton}" id="job_print"><i class="icon-white" data-bind="css: {'icon-print': !isPaused(), 'icon-undo': isPaused()}"></i> <span data-bind="text: (isPaused() ? '{{ _('Restart') }}' : '{{ _('Print') }}')">{{ _('Print') }}</span></button>#}
+    <button class="btn btn-primary span3" data-bind="click: print, enable: isOperational() && isReady() && !isPrinting() && !isPaused() && loginState.isUser(),  attr: {title: titlePrintButton}" id="job_print"><i class="icon-white" data-bind="css: {'icon-print': !isPaused()}"></i> <span data-bind="text: ( '{{ _('Print') }}')">{{ _('Print') }}</span></button>
+    <button class="btn span3" id="job_pause" data-bind="click: pause, enable: isOperational() && pflag() && (isPrinting() || isPaused()) && loginState.isUser(), css: {active: isPaused()}, attr: {title: titlePauseButton}"><i data-bind="css: {'icon-pause': !isPaused(), 'icon-play': isPaused()}"></i> <span data-bind="visible: !isPaused()">{{ _('Pause') }}</span><span data-bind="visible: isPaused()">{{ _('Resume') }}</span></button>
+    <button class="btn span3" id="job_cancel" data-bind="click: cancel, enable: isOperational() && (isPrinting() || isPaused()) && loginState.isUser()" title="{{ _('Cancels the print job') }}"><i class="icon-stop"></i> {{ _('Cancel') }}</button>
+{#<select class="span3" id="quickstart" data-bind="options: quickOptions, value: quickselected,  enable: isOperational() && isReady() && !isPrinting() && !isPaused() && loginState.isUser()"></select>#}
+</div>
+<div class="row-fluid" style="margin-top: 10px">
+<img src="{{ url_for('static', filename='img/Blank_1920x1080.png') }}" id="image" name="image" height="270" width="480">
+</div>
+   <h1>Settings</h1>
+        <div class="row-fluid" style="margin-bottom: 5px">
+         <label class="span3" >{{ _('Begin Layer no') }}</label>
+            <div class="input-append span3">
+                <input type="number" step="any" min="0" class="input-mini text-right" data-bind="value: blayer">
+            </div>
+          <label class="span3" ">{{ _('X (px)') }}</label>
+           <div class="input-append span3">
+                <input type="number" step="any" min="0" class="input-small text-right" data-bind="value: xpx">
+            </div>
+        </div>
+        <div class="row-fluid" style="margin-bottom: 5px">
+         <label class="span3" >{{ _('Slice Thickness (mm)') }}</label>
+            <div class="input-append span3">
+                <input type="number" step="any" min="0" class="input-small text-right" data-bind="value: layert">
+            </div>
+          <label class="span3" ">{{ _('Y (px)') }}</label>
+           <div class="input-append span3">
+                <input type="number" step="any" min="0" class="input-small text-right" data-bind="value: ypx">
+            </div>
+        </div>
+        <div class="row-fluid" style="margin-bottom: 5px">
+         <label class="span3" >{{ _('Build Size X (mm)') }}</label>
+            <div class="input-append span3">
+                <input type="number" step="any" min="0" class="input-mini text-right" data-bind="value: prox">
+           </div>
+         <label class="span3" >{{ _('Native Resolution (um)') }}</label>
+            <div class="input-append span3">
+                <input type="number" step="any" min="0" class="input-mini text-right" data-bind="value: nres">
+            </div>
+          {#<label class="span3" ">{{ _('OffsetX (mm)') }}</label>
+           <div class="input-append span3">
+                <input type="number" step="any" min="0" class="input-small text-right" data-bind="value: offx">
+            </div>#}
+        </div>
+ <label class="checkbox">
+    <input type="checkbox" id="shutter_enable" data-bind="checked: shutter, css: {disabled: !isOperational()}, enable: isOperational()"> {{ _('Enable Shutter') }}
+</label>
+ <label class="checkbox">
+    <input type="checkbox" id="mask_enable" data-bind="checked: mask, css: {disabled: !isOperational()}, enable: isOperational()"> {{ _('Enable Mask') }}
+</label>
+       {#<div class="row-fluid" style="margin-bottom: 5px">
+         <label class="span3" >{{ _('Native Resolution (um)') }}</label>
+            <div class="input-append span3">
+                <input type="number" step="any" min="0" class="input-mini text-right" data-bind="value: nres">
+            </div>
+          <label class="span3" ">{{ _('OffsetY (mm)') }}</label>
+           <div class="input-append span3">
+                <input type="number" step="any" min="0" class="input-small text-right" data-bind="value: offy">
+            </div>
+        </div>#}
+    <h1>Specifications</h1><input type="text" class="input-medium text-left" data-bind="value: savename"><a href='#' onclick='downloadCSV({ filename: "cvsfile.csv" });'>Save CSV File</a>
+        <div class="row-fluid" style="margin-bottom: 10px">
+        <div class="input-append input-small" style="width: 110px;" ><h4 style="text-align: center;width: 110px;">{{ _('From<br/> Layer') }}</h4></div>
+        <div class="input-append input-small" style="width: 110px;" ><h4 style=" text-align: center;width: 110px;">{{ _('To<br/> Layer') }}</h4></div>
+        <div class="input-append input-small" style="width: 110px;" ><h4 style=" text-align: center;width: 110px;">{{ _('Exp.<br/>Time') }}</h4></div>
+        <div class="input-append input-small" style="width: 110px;" ><h4 style=" text-align: center;width: 110px;">{{ _('Lift<br/> Height') }}</h4></div>
+        <div class="input-append input-small" style="width: 110px;"><h4 style=" text-align: center;width: 110px;">{{ _('Lift<br/> Speed') }}</h4></div>
+        <div class="input-append input-small" style="width: 110px;"><h4 style=" text-align: center;">{{ _('Down<br/> Speed') }}</h4></div>
+        <div class="input-append input-small" style="width: 110px;"><h4 style=" text-align: center;">{{ _('Delay<br/>Time') }}</h6></div>
+    </div>
+    <div data-bind="foreach: spec">
+       <div class="row-fluid" style="margin-bottom: 10px">
+            <div class="input-append {width:110px;}" style="width: 110px;" >
+                <input type="number" step="any" min="1" class="input-small text-right" data-bind="value: fromlay">
+            </div>
+           <div class="input-append {width:110px;}" style="width: 110px;" >
+                <input type="number" step="any" min="1" class="input-small text-right" data-bind="value: tolay">
+            </div>
+            <div class="input-append {width:110px;}" style="width: 110px;" >
+                <input type="number" step="any" min="0.1" class="input-small text-right" data-bind="value: expos">
+            </div>
+           <div class="input-append {width:110px;}" style="width: 110px;" >
+                <input type="number" step="any" min="1" class="input-small text-right" data-bind="value: lift">
+            </div>
+            <div class="input-append {width:110px;}" style="width: 110px;" >
+                <input type="number" step="any" min="1" class="input-small text-right" data-bind="value: ups">
+            </div>
+           <div class="input-append {width:110px;}" style="width: 110px;">
+                <input type="number" step="any" min="0" class="input-small text-right" data-bind="value: downs">
+            </div>
+            <div class="input-append {width:110px;}" style="width: 110px;">
+                <input type="number" step="any" min="0" class="input-small text-right" data-bind="value: delay">
+            </div>
+            <div class="input-append {width:40px;}">
+                <a title="Remove profile" class="btn btn-danger" data-bind="click: $parent.removeSpec"><i class="icon-trash"></i></a>
+            </div>
+        </div>
+    </div>
+     <div class="row-fluid">
+        <div class="offset7 span2" style="padding-left: 275px;">
+            <a title="Add Profile" class="btn btn-primary" data-bind="click: addSpec"><i class="icon-plus"></i></a>
+        </div>
+    </div>
+       
+</div>

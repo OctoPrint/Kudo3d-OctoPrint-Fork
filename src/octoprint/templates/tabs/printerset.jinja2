@@ -1,0 +1,141 @@
+<div id="printerset_1" class="form-horizontal">       
+        <div class="row-fluid" style="margin-bottom: 20px">
+         <label class="span3" >{{ _('Printing Mode ') }}</label>
+        <div class="distance">
+            <div class="btn-group" data-toggle="buttons-radio" id="jog_mode">
+                <button type="button" id="control-distance10" title="Built-In parameters provided by Kudo3D. You DON'T need to load a parameter file(.csv)." class="btn btn-mini distance active" data-distance="10" data-bind="enable: loginState.isUser(), click: function() { $root.lockAdvSetting()}">Basic</button>
+                <button type="button" id="control-distance100" title="You can set up your own printing parameters. You can also use a parameter file(.csv) in this mode."class="btn btn-mini distance " data-distance="100" data-bind="enable: loginState.isUser(), click: function() { $root.showAdvSetting()} ">Advanced</button>
+                <button type="button" id="test_mode" class="btn btn-mini distance " data-distance="1000" style="visibility: hidden" data-bind="enable: loginState.isUser(), click: function() { $root.sendHomeCommand(['z']), $root.sendTestMode(), setTimeout(function(){$root.print11()},69000) }" >Test Mode</button>
+            </div>
+        </div>
+        </div>
+        <div id="material" class="row-fluid" style="margin-bottom: 20px">
+         <label class="span3" >{{ _('Material') }}</label>
+        <div class="btn-group" data-toggle="buttons-radio">
+            <button class="btn btn-default"  data-bind="enable: isOperational() && !isPrinting() && loginState.isUser(), click: function() { $root.sendWBG_parameter() }">
+                <img src="{{ url_for('static', filename='img/WhiteBlackGreen.png') }}" width="101" >
+            </button>
+            <button class="btn btn-default"  data-bind="enable: isOperational() && !isPrinting() && loginState.isUser(), click: function() { $root.sendENH_parameter() }">
+                <img src="{{ url_for('static', filename='img/ENG Hard.png') }}" width="60" >
+            </button>
+            <button class="btn btn-default"   data-bind="enable: isOperational() && !isPrinting() && loginState.isUser(), click: function() { $root.sendENT_parameter() }">
+                <img src="{{ url_for('static', filename='img/ENG Tough.png') }}" width="60" >
+            </button>
+            <button class="btn btn-default"  data-bind="enable: isOperational() && !isPrinting() && loginState.isUser(), click: function() { $root.sendCast_parameter() }">
+                <img src="{{ url_for('static', filename='img/Cast.png') }}" width="60" >
+            </button>
+            <button class="btn btn-default"  data-bind="enable: isOperational() && !isPrinting() && loginState.isUser(), click: function() { $root.sendClear_parameter() }">
+                <img src="{{ url_for('static', filename='img/Clear.png') }}" width="60" >
+            </button>
+            <button class="btn btn-default"  data-bind="enable: isOperational() && !isPrinting() && loginState.isUser(), click: function() { $root.sendFlexible_parameter() }">
+                <img src="{{ url_for('static', filename='img/Flexible.png') }}" width="60" >
+            </button>
+       </div> 
+       </div>
+        <div class="row-fluid" style="margin-bottom: 20px; margin-top: 20px">
+         <label class="span3" >{{ _('Begin Layer Number') }}</label>
+            <div class="input-append span3">
+                <input type="number" step="any" min="0" class="input-mini text-right" data-bind="value: blayer">
+            </div>
+        </div>
+        <div class="row-fluid" style="margin-bottom: 20px; margin-top: 20px">
+         <label class="span3" >{{ _('Slice Thickness (mm)') }}</label>
+            <div class="input-append span3">
+                <input type="number" step="any" min="0" class="input-small text-right" data-bind="value: layert">
+            </div>
+        </div>
+<div class="row-fluid print-control" style="display: none;width: 860px;" data-bind="visible: loginState.isUser">
+    {#<button class="btn btn-primary span4" data-bind="click: print, enable: isOperational() && isReady() && !isPrinting() && loginState.isUser(), css: {'btn-danger': isPaused()}, attr: {title: titlePrintButton}" id="job_print"><i class="icon-white" data-bind="css: {'icon-print': !isPaused(), 'icon-undo': isPaused()}"></i> <span data-bind="text: (isPaused() ? '{{ _('Restart') }}' : '{{ _('Print') }}')">{{ _('Print') }}</span></button>#}
+    <button class=" btn span3"  data-bind="click: print, enable: isOperational() && isReady() && !isPrinting() && !isPaused() && loginState.isUser(),  attr: {title: titlePrintButton}" id="job_print"><i class="icon-white" data-bind="css: {'icon-print': !isPaused()}"></i> <span data-bind="text: ( '{{ _('Print') }}')">{{ _('Print') }}</span></button>
+    <button class=" btn span3" id="job_pause" data-bind="click: pause, enable: isOperational() && pflag() && (isPrinting() || isPaused()) && loginState.isUser(), css: {active: isPaused()}, attr: {title: titlePauseButton}"><i data-bind="css: {'icon-pause': !isPaused(), 'icon-play': isPaused()}"></i> <span data-bind="visible: !isPaused()">{{ _('Pause') }}</span><span data-bind="visible: isPaused()">{{ _('Resume') }}</span></button>
+    <button class=" btn span3" id="job_cancel" data-bind="click: cancel, enable: isOperational() && (isPrinting() || isPaused()) && loginState.isUser()" title="{{ _('Cancels the print job') }}"><i class="icon-stop"></i> {{ _('Cancel') }}</button>
+    <button class=" btn span3" id="job_peek" data-bind="click: peek, enable: isOperational() && isPaused() && loginState.isUser()" title="{{ _('Slowly lift up platform to check the print job') }}"><i class="icon-eye-open"></i> {{ _('Check') }}</button>
+    
+{#<select class="span3" id="quickstart" data-bind="options: quickOptions, value: quickselected,  enable: isOperational() && isReady() && !isPrinting() && !isPaused() && loginState.isUser()"></select>#}
+</div>
+<div class="row-fluid" style="margin-top: 10px ;width: 640px;height: 480px;">
+<img src="{{ url_for('static', filename='img/Blank_1440x2560r.png') }}" id="image" name="image" height="360" width="480" >{#class="rotate90"#}
+</div>
+       {#<div class="row-fluid" style="margin-bottom: 5px">
+         <label class="span3" >{{ _('Native Resolution (um)') }}</label>
+            <div class="input-append span3">
+                <input type="number" step="any" min="0" class="input-mini text-right" data-bind="value: nres">
+            </div>
+          <label class="span3" ">{{ _('OffsetY (mm)') }}</label>
+           <div class="input-append span3">
+                <input type="number" step="any" min="0" class="input-small text-right" data-bind="value: offy">
+            </div>
+        </div>#}
+<div id="advance_settings"  class="accordion-heading" >
+    <a class="accordion-toggle" name="advance_settings" data-toggle="collapse" data-target="#advance"><font size="5">
+    Advanced Settings </font><i class="icon-collapse-top"></i>
+    </a>
+                                
+</div>
+<div id="advance" class="accordion-body in collapse" style="height: auto;">
+   <div class="accordion-inner">
+
+        <input type="text" class="input-medium text-left" data-bind="value: savename"><a href='#' onclick='downloadCSV({ filename: "cvsfile.csv" });'>Save CSV File</a>
+        <div class="row-fluid" style="margin-bottom: 10px">
+        <div class="input-append input-small" style="width: 110px;" ><h4 style="text-align: center;width: 110px;">{{ _('From<br/> Layer') }}</h4></div>
+        <div class="input-append input-small" style="width: 110px;" ><h4 style=" text-align: center;width: 110px;">{{ _('To<br/> Layer') }}</h4></div>
+        <div class="input-append input-small" style="width: 110px;" ><h4 style=" text-align: center;width: 110px;">{{ _('Exposure<br/>Time<br/> (s)') }}</h4></div>
+        <div class="input-append input-small" style="width: 110px;" ><h4 style=" text-align: center;width: 110px;">{{ _('Lift<br/> Height<br/> (mm)') }}</h4></div>
+        <div class="input-append input-small" style="width: 110px;"><h4 style=" text-align: center;width: 110px;">{{ _('Lift<br/> Speed<br/> (mm/min)') }}</h4></div>
+        <div class="input-append input-small" style="width: 110px;"><h4 style=" text-align: center;">{{ _('Down<br/> Speed<br/> (mm/min)') }}</h4></div>
+        <div class="input-append input-small" style="width: 110px;"><h4 style=" text-align: center;">{{ _('Delay<br/>Time<br/> (s)') }}</h6></div>
+    </div>
+    <div data-bind="foreach: spec">
+       <div class="row-fluid" style="margin-bottom: 10px">
+            <div class="input-append {width:110px;}" style="width: 110px;" >
+                <input type="number" step="any" min="1" class="input-small text-right" data-bind="value: fromlay">
+            </div>
+           <div class="input-append {width:110px;}" style="width: 110px;" >
+                <input type="number" step="any" min="1" class="input-small text-right" data-bind="value: tolay">
+            </div>
+            <div class="input-append {width:110px;}" style="width: 110px;" >
+                <input type="number" step="any" min="0.1" class="input-small text-right" data-bind="value: expos">
+            </div>
+           <div class="input-append {width:110px;}" style="width: 110px;" >
+                <input type="number" step="any" min="1" class="input-small text-right" data-bind="value: lift">
+            </div>
+            <div class="input-append {width:110px;}" style="width: 110px;" >
+                <input type="number" step="any" min="1" class="input-small text-right" data-bind="value: ups">
+            </div>
+           <div class="input-append {width:110px;}" style="width: 110px;">
+                <input type="number" step="any" min="0" class="input-small text-right" data-bind="value: downs">
+            </div>
+            <div class="input-append {width:110px;}" style="width: 110px;">
+                <input type="number" step="any" min="0" class="input-small text-right" data-bind="value: delay">
+            </div>
+            <div class="input-append {width:40px;}">
+                <button title="Remove This Row" class="btn btn-danger" data-bind="click: $parent.removeSpec"><i class="icon-trash"></i></button>
+            </div>
+        </div>
+    </div>
+     <div class="row-fluid">
+        <div class="offset7 span2" style="padding-left: 275px;">
+            <button title="Add A New Row" class="btn btn-primary" data-bind="click: addSpec"><i class="icon-plus"></i></button>
+        </div>
+    </div>
+      
+</div>
+</div>
+</div>
+<script type="text/javascript">
+        document.getElementById('control-distance10').onkeydown = function(event){
+            switch(event.which){
+            case 121:
+                document.getElementById("test_mode").style.visibility="visible";
+                break;
+            
+            case 120:
+                document.getElementById("test_mode").style.visibility="hidden";
+                break;
+            }
+            
+        }
+        
+    </script>
+</body>  
+</html>

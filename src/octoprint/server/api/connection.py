@@ -44,6 +44,8 @@ def connectionCommand():
 		connection_options = get_connection_options()
 
 		port = None
+		port1 = None
+		projector = None
 		baudrate = None
 		printerProfile = None
 		if "port" in data.keys():
@@ -59,7 +61,11 @@ def connectionCommand():
 			if not printerProfileManager.exists(printerProfile):
 				return make_response("Invalid printer profile: %s" % printerProfile, 400)
 		if "save" in data.keys() and data["save"]:
+			port1 = data["port1"]
+			projector = data["projector"]
 			settings().set(["serial", "port"], port)
+			settings().set(["serial", "port1"], port1)
+			settings().set(["serial", "projector"], projector)
 			settings().setInt(["serial", "baudrate"], baudrate)
 			printerProfileManager.set_default(printerProfile)
 		if "autoconnect" in data.keys():
@@ -80,9 +86,12 @@ def _get_options():
 		ports=connection_options["ports"],
 		baudrates=connection_options["baudrates"],
 		printerProfiles=[dict(id=printer_profile["id"], name=printer_profile["name"] if "name" in printer_profile else printer_profile["id"]) for printer_profile in profile_options.values() if "id" in printer_profile],
+		projectProfiles=["OPTOMA","acer_IR","viewsonic_IR","acer","viewsonic","user_define"],
 		portPreference=connection_options["portPreference"],
+		portPreference1=connection_options["portPreference1"],
 		baudratePreference=connection_options["baudratePreference"],
-		printerProfilePreference=default_profile["id"] if "id" in default_profile else None
+		printerProfilePreference=default_profile["id"] if "id" in default_profile else None,
+		projector=connection_options["projector"],
 	)
 
 	return options

@@ -15,6 +15,11 @@ $(function() {
         self.isSdReady = ko.observable(undefined);
 
         self.filename = ko.observable(undefined);
+        self.confilename = ko.observable(undefined);
+        self.totallayers = ko.observable(undefined);
+        self.currentlayer = ko.observable(undefined);
+        self.totaltime = ko.observable(undefined);
+        self.remtime = ko.observable(undefined);
         self.progress = ko.observable(undefined);
         self.filesize = ko.observable(undefined);
         self.filepos = ko.observable(undefined);
@@ -27,6 +32,7 @@ $(function() {
 
         self.filament = ko.observableArray([]);
         self.estimatedPrintTime = ko.observable(undefined);
+        self.averagePrintTime = ko.observable(undefined);
         self.lastPrintTime = ko.observable(undefined);
 
         self.currentHeight = ko.observable(undefined);
@@ -54,8 +60,8 @@ $(function() {
         });
         self.heightString = ko.computed(function() {
             if (!self.currentHeight())
-                return "-";
-            return _.sprintf("%.02fmm", self.currentHeight());
+                return "0mm";
+            return _.sprintf("%.03fmm", self.currentHeight());
         });
         self.printTimeString = ko.computed(function() {
             if (!self.printTime())
@@ -147,16 +153,21 @@ $(function() {
         self._processJobData = function(data) {
             if (data.file) {
                 self.filename(data.file.name);
+                self.confilename(data.file.conname);
                 self.filesize(data.file.size);
                 self.sd(data.file.origin == "sdcard");
+                self.totallayers(data.file.layers);
+                self.currentlayer(data.file.currentlayer);
             } else {
                 self.filename(undefined);
+                self.confilename(undefined);
                 self.filesize(undefined);
                 self.sd(undefined);
             }
 
             self.estimatedPrintTime(data.estimatedPrintTime);
             self.lastPrintTime(data.lastPrintTime);
+            self.averagePrintTime(data.averagePrintTime);
 
             var result = [];
             if (data.filament && typeof(data.filament) == "object" && _.keys(data.filament).length > 0) {

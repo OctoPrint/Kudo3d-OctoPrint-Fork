@@ -1,7 +1,19 @@
-<a href="#" class="dropdown-toggle" data-toggle="dropdown">
-    <i class="icon-off"></i> {{ _('System') }}
-    <b class="caret"></b>
-</a>
-<ul class="dropdown-menu" data-bind="foreach: systemActions">
-    <li><a href="#" data-bind="click: $root.triggerAction, text: name"></a></li>
+<!--<li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="icon-book"></i>{{ _('Tutorial') }}<span class="caret"></span></a>
+    <ul class="dropdown-menu">
+        <li><a href="#" id="startTour">Explore Kudo</a></li>
+        <li><a href="#" id="printingTour">Printing Step</a></li>
+        <li><a href="#">Calibration</a></li>
+    </ul>
+</li>-->
+
+<li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="icon-off"></i> {{ _('System') }}<span class="caret"></span></a>
+<ul class="dropdown-menu" >
+    <li><a id="autoupdate" href="#" data-bind="click: $root.AutoUpdate ">{{ _('AutoUpdate') }}</a></li>
+    <li class="dropdown-submenu"><a href="#" >Power<span class="caret"></span></a>
+        <ul class="dropdown-menu" data-bind="foreach: systemActions">
+            <li><a href="#" data-bind="click: $root.triggerAction, text: name"></a></li>
+        <ul>
 </ul>
+</li>
+
+

@@ -49,7 +49,20 @@ $(function() {
             } else {
                 callback();
             }
-        }
+        };
+        self.AutoUpdate = function() {
+            $.ajax({
+                url: API_BASEURL + "printer/autoupdate",
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                data: JSON.stringify({"command": "autoupdate"})
+            });
+            
+        };
+        self.CmdShow = function() {
+            $('z_zero').style.visibility = "visible";
+        };
     }
 
     OCTOPRINT_VIEWMODELS.push([

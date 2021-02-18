@@ -23,9 +23,12 @@ $(function() {
         self.portOptions = ko.observableArray(undefined);
         self.baudrateOptions = ko.observableArray(undefined);
         self.printerOptions = ko.observableArray(undefined);
+        self.projectorOptions = ko.observableArray(undefined);
         self.selectedPort = ko.observable(undefined);
+        self.selectedPort1 = ko.observable(undefined);
         self.selectedBaudrate = ko.observable(undefined);
         self.selectedPrinter = ko.observable(undefined);
+        self.selectedprojector = ko.observable(undefined);
         self.saveSettings = ko.observable(undefined);
         self.autoconnect = ko.observable(undefined);
 
@@ -61,20 +64,27 @@ $(function() {
             var ports = response.options.ports;
             var baudrates = response.options.baudrates;
             var portPreference = response.options.portPreference;
+            var portPreference1 = response.options.portPreference1;
             var baudratePreference = response.options.baudratePreference;
             var printerPreference = response.options.printerProfilePreference;
             var printerProfiles = response.options.printerProfiles;
+            var projector = response.options.projector;
+            var projectProfiles = response.options.projectProfiles;
 
             self.portOptions(ports);
+            self.projectorOptions(projectProfiles);
             self.baudrateOptions(baudrates);
 
             if (!self.selectedPort() && ports && ports.indexOf(portPreference) >= 0)
                 self.selectedPort(portPreference);
+            if (!self.selectedPort1() && ports && ports.indexOf(portPreference1) >= 0)
+                self.selectedPort1(portPreference1);
             if (!self.selectedBaudrate() && baudrates && baudrates.indexOf(baudratePreference) >= 0)
                 self.selectedBaudrate(baudratePreference);
             if (!self.selectedPrinter() && printerProfiles && printerProfiles.indexOf(printerPreference) >= 0)
                 self.selectedPrinter(printerPreference);
-
+            if (!self.selectedprojector() && projectProfiles && projectProfiles.indexOf(projector) >= 0)
+                self.selectedprojector(projector);
             self.saveSettings(false);
         };
 
@@ -114,8 +124,10 @@ $(function() {
                 var data = {
                     "command": "connect",
                     "port": self.selectedPort(),
+                    "port1": self.selectedPort1(),
                     "baudrate": self.selectedBaudrate(),
                     "printerProfile": self.selectedPrinter(),
+                    "projector": self.selectedprojector(),
                     "autoconnect": self.settings.serial_autoconnect()
                 };
 
